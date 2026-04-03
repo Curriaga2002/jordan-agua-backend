@@ -1,0 +1,183 @@
+// This is the Prisma schema file
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             Int      @id @default(autoincrement())
+  email          String   @unique
+  password       String
+  role           String   // e.g. ADMIN, USER
+  clients        Client[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Client {
+  id             Int      @id @default(autoincrement())
+  name           String
+  email          String   @unique
+  orders         Order[]
+  user           User     @relation(fields: [userId], references: [id])
+  userId        Int
+}
+
+model Product {
+  id             Int      @id @default(autoincrement())
+  name           String
+  price          Float
+  orderItems     OrderItem[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Order {
+  id             Int      @id @default(autoincrement())
+  client         Client   @relation(fields: [clientId], references: [id])
+  clientId      Int
+  orderItems     OrderItem[]
+  status         String   // e.g. PENDING, COMPLETED
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model OrderItem {
+  id             Int      @id @default(autoincrement())
+  product        Product  @relation(fields: [productId], references: [id])
+  productId     Int
+  order          Order    @relation(fields: [orderId], references: [id])
+  orderId       Int
+  quantity       Int
+}
+
+model Route {
+  id             Int      @id @default(autoincrement())
+  name           String
+  routeOrders    RouteOrder[]
+}
+
+model RouteOrder {
+  id             Int      @id @default(autoincrement())
+  route          Route     @relation(fields: [routeId], references: [id])
+  routeId       Int
+  orders         Order[]
+}
+
+model DeliveryAttempt {
+  id             Int      @id @default(autoincrement())
+  order          Order     @relation(fields: [orderId], references: [id])
+  orderId       Int
+  attemptedAt    DateTime
+  status         String   // e.g. SUCCESS, FAILED
+}
+
+model DeliveryLog {
+  id             Int      @id @default(autoincrement())
+  deliveryAttempt DeliveryAttempt @relation(fields: [attemptId], references: [id])
+  attemptId      Int
+  log            String
+  createdAt      DateTime @default(now())
+}
+
+model Payment {
+  id             Int      @id @default(autoincrement())
+  order          Order     @relation(fields: [orderId], references: [id])
+  orderId       Int
+  amount         Float
+  method         String   // e.g. CREDIT_CARD, CASH
+  createdAt      DateTime @default(now())
+}
+
+model CartItem {
+  id             Int      @id @default(autoincrement())
+  product        Product  @relation(fields: [productId], references: [id])
+  productId     Int
+  quantity       Int
+}
+
+model Worker {
+  id             Int      @id @default(autoincrement())
+  name           String
+  labor          Labor[]
+}
+
+model Labor {
+  id             Int      @id @default(autoincrement())
+  worker         Worker   @relation(fields: [workerId], references: [id])
+  workerId      Int
+  task           String   // Description of work
+  hoursWorked     Float
+  payment        WorkerPayment[]
+}
+
+model WorkerPayment {
+  id             Int      @id @default(autoincrement())
+  labor          Labor    @relation(fields: [laborId], references: [id])
+  laborId       Int
+  amount         Float
+  date           DateTime @default(now())
+}
+
+model WorkerLoan {
+  id             Int      @id @default(autoincrement())
+  worker         Worker   @relation(fields: [workerId], references: [id])
+  workerId      Int
+  amount         Float
+  date           DateTime @default(now())
+}
+
+model WorkerAdvance {
+  id             Int      @id @default(autoincrement())
+  worker         Worker   @relation(fields: [workerId], references: [id])
+  workerId      Int
+  amount         Float
+  date           DateTime @default(now())
+}
+
+model DailyOpen {
+  id             Int      @id @default(autoincrement())
+  date           DateTime @default(now())
+  cashEntry      CashEntry[]
+}
+
+model DailyClose {
+  id             Int      @id @default(autoincrement())
+  date           DateTime @default(now())
+  cashExit       CashExit[]
+}
+
+model Production {
+  id             Int      @id @default(autoincrement())
+  date           DateTime @default(now())
+  amount         Float
+  createdAt      DateTime @default(now())
+}
+
+model Inventory {
+  id             Int      @id @default(autoincrement())
+  product        Product  @relation(fields: [productId], references: [id])
+  productId     Int
+  quantity       Int
+}
+
+model CashEntry {
+  id             Int      @id @default(autoincrement())
+  dailyOpen      DailyOpen @relation(fields: [dailyOpenId], references: [id])
+  dailyOpenId    Int
+  amount         Float
+  createdAt      DateTime @default(now())
+}
+
+model CashExit {
+  id             Int      @id @default(autoincrement())
+  dailyClose     DailyClose @relation(fields: [dailyCloseId], references: [id])
+  dailyCloseId   Int
+  amount         Float
+  createdAt      DateTime @default(now())
+}
